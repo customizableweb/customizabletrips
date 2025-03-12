@@ -30,9 +30,17 @@ def save_ips():
 @app.get("/", response_class=HTMLResponse)
 async def get_content(request: Request, gclid: str = None):
     ip = request.client.host
-    if ip not in all_ips:  # Only log new IPs
-        all_ips.add(ip)
-        save_ips()  # Save IPs to file
+
+    if gclid:
+        marked_ip = f"gclid_{ip}"
+        if ip in all_ips:  # If IP was logged normally, remove it
+            all_ips.discard(ip)
+        all_ips.add(marked_ip)  # Store with gclid marker
+    else:
+        if f"gclid_{ip}" not in all_ips:  # Don't override if already marked
+            all_ips.add(ip)
+
+    save_ips()  # Save IPs to file
 
     if ip in known_ips:
         return templates.TemplateResponse("main.html", {"request": request})
